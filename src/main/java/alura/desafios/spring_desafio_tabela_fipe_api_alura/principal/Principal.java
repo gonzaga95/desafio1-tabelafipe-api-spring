@@ -1,11 +1,16 @@
 package alura.desafios.spring_desafio_tabela_fipe_api_alura.principal;
 
 import alura.desafios.spring_desafio_tabela_fipe_api_alura.model.Dados;
+import alura.desafios.spring_desafio_tabela_fipe_api_alura.model.Modelos;
+import alura.desafios.spring_desafio_tabela_fipe_api_alura.model.Veiculo;
 import alura.desafios.spring_desafio_tabela_fipe_api_alura.service.ConsumoApi;
 import alura.desafios.spring_desafio_tabela_fipe_api_alura.service.ConverteDados;
 
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 public class Principal {
     Scanner scanner = new Scanner(System.in);
@@ -52,5 +57,43 @@ public class Principal {
 
         System.out.println("Informe o código da marca que deseja consultar ");
         var codigoMarca = scanner.nextLine();
+
+        endereco = endereco + codigoMarca + "/modelos/";
+        json = consumo.obterDados(endereco);
+        var modeloLista = conversor.obterDados(json, Modelos.class);
+
+        System.out.println("\nModelos para essa marca: ");
+        modeloLista.modelos().stream()
+                .sorted(Comparator.comparing(Dados::codigo))
+                .forEach(System.out::println);
+
+        System.out.println("\nPara filtrar, digite um trecho do modelo desejado: ");
+        var veiculoNome = scanner.nextLine();
+
+        List<Dados> modelosFiltrados = modeloLista.modelos().stream()
+                .filter(v -> v.nome().toLowerCase().contains(veiculoNome.toLowerCase()))
+                .collect(Collectors.toList());
+
+        System.out.println("Modelos encontrados: ");
+        modelosFiltrados.forEach(System.out::println);
+
+        System.out.println("Digite o código do modelo desejado: ");
+        var codigoModelo = scanner.nextLine();
+
+        endereco = endereco + codigoModelo + "/anos/";
+        json = consumo.obterDados(endereco);
+        List<Dados> anos = conversor.obterLista(json, Dados.class);
+
+        List<Veiculo> veiculos = new ArrayList<>();
+
+        for (int i = 0; i < anos.size(); i++) {
+            var enderecosAnos = endereco + anos.get(i).codigo();
+            json = consumo.obterDados(enderecosAnos);
+            Veiculo veiculo = conversor.obterDados(json, Veiculo.class);
+            veiculos.add((veiculo));
+        }
+
+        System.out.println("Os veículos filtrados com preço por ano: ");
+        veiculos.forEach(System.out::println);
     }
 }
